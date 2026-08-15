@@ -13,7 +13,6 @@ requirements = python3,kivy
 
 orientation = portrait
 
-# 关闭全部网络权限
 android.permissions =
 
 android.ndk = 25c
@@ -23,13 +22,14 @@ android.build_tools = 34.0.0
 android.api = 33
 android.minapi = 21
 
+android.python_version = 3.11
+
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 fullscreen = 0
 android.entrypoint = org.kivy.android.PythonActivity
 android.debug_artifact = apk
 
-android.gradle_dependencies =
 p4a.source_dir = ./p4a
 
 [buildozer]

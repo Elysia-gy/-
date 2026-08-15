@@ -22,7 +22,7 @@ jobs:
             ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
             zlib1g-dev autoconf automake libtool cmake pkg-config \
-            libffi-dev libssl-dev
+            libffi-dev libssl-dev libltdl-dev
 
       - name: Install build tools
         run: |
@@ -32,30 +32,25 @@ jobs:
         run: |
           yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
 
-      # ================================================================
-      # 清理缓存并修补 libffi recipe
-      # ================================================================
       - name: Prepare patched p4a and clear libffi cache
         run: |
-          # 删除可能缓存的旧 libffi 源码
+          # 删除缓存
           rm -rf ~/.buildozer/android/packages/libffi*
           rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/libffi
 
-          # 克隆 master 分支的 p4a
           git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
 
           RECIPE="p4a/pythonforandroid/recipes/libffi/__init__.py"
           echo "====== 原始内容 ======"
           cat "$RECIPE"
 
-          # 使用 Python 精确替换
           python3 -c "
           import re
           with open('$RECIPE', 'r') as f:
               content = f.read()
-          # 替换版本号：匹配 version = 'v3.4.2' 或 version = "3.2.1" 等
+          # 替换版本号（匹配 v3.4.2 或 3.2.1 等）
           content = re.sub(r\"version\\s*=\\s*['\\\"]v?3\\.[0-9]+\\.[0-9]+['\\\"]\", 'version = \"3.4.4\"', content)
-          # 替换 URL：匹配任何引号包裹的旧 URL，替换为 3.4.4 的下载地址
+          # 替换 URL
           content = re.sub(r\"url\\s*=\\s*['\\\"][^'\\\"]+['\\\"]\", 'url = \"https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz\"', content)
           with open('$RECIPE', 'w') as f:
               f.write(content)
@@ -64,17 +59,13 @@ jobs:
           echo "====== 修改后内容 ======"
           cat "$RECIPE"
 
-          # 验证替换是否成功
           if grep -q 'version = "3.4.4"' "$RECIPE" && grep -q 'libffi-3.4.4.tar.gz' "$RECIPE"; then
             echo "✅ libffi recipe 已成功更新到 3.4.4"
           else
-            echo "❌ 版本或 URL 替换失败，请检查"
+            echo "❌ 版本或 URL 替换失败"
             exit 1
           fi
 
-      # ================================================================
-      # 构建 APK
-      # ================================================================
       - name: Build APK
         run: |
           buildozer android debug

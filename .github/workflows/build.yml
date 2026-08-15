@@ -32,14 +32,27 @@ jobs:
         run: |
           yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
 
-      # ========== 关键修改：使用 master 分支并升级 libffi ==========
+      # ===============================================================
+      # 核心修补：使用本地 python-for-android 并升级 libffi 到 3.4.4
+      # ===============================================================
       - name: Prepare patched python-for-android (master branch)
         run: |
           git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
-          RECIPE_FILE="p4a/pythonforandroid/recipes/libffi/__init__.py"
-          sed -i 's/version = "3.2.1"/version = "3.4.4"/' "$RECIPE_FILE"
-          sed -i 's|url = ".*"|url = "https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz"|' "$RECIPE_FILE"
-      # ===========================================================
+          python3 -c "
+          import re
+          recipe_path = 'p4a/pythonforandroid/recipes/libffi/__init__.py'
+          with open(recipe_path, 'r') as f:
+              content = f.read()
+          # 升级版本号
+          content = re.sub(r'version = \"3\.[0-9]+\.[0-9]+\"', 'version = \"3.4.4\"', content)
+          # 替换下载 URL
+          content = re.sub(r'(^    url = ).*', r'\\1\"https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz\"', content, flags=re.MULTILINE)
+          with open(recipe_path, 'w') as f:
+              f.write(content)
+          "
+          echo "=== Modified libffi recipe ==="
+          cat p4a/pythonforandroid/recipes/libffi/__init__.py
+      # ===============================================================
 
       - name: Build APK
         run: |

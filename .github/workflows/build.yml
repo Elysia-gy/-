@@ -32,15 +32,14 @@ jobs:
         run: |
           yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
 
-      - name: Prepare patched python-for-android
+      # ========== 关键修改：使用 master 分支并升级 libffi ==========
+      - name: Prepare patched python-for-android (master branch)
         run: |
-          # 克隆 p4a（使用 develop 分支，包含较新 recipe）
-          git clone --depth 1 --branch develop https://github.com/kivy/python-for-android.git p4a
-          # 升级 libffi 到 3.4.4（兼容新版 autotools）
+          git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
           RECIPE_FILE="p4a/pythonforandroid/recipes/libffi/__init__.py"
           sed -i 's/version = "3.2.1"/version = "3.4.4"/' "$RECIPE_FILE"
           sed -i 's|url = ".*"|url = "https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz"|' "$RECIPE_FILE"
-
+      # ===========================================================
 
       - name: Build APK
         run: |

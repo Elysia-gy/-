@@ -6,6 +6,7 @@ package.domain = org.omphalos
 
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,txt
+source.exclude_dirs = tests, docs, examples, .git
 
 version = 1.0
 

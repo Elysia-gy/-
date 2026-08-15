@@ -16,13 +16,19 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y zip unzip build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
+          sudo apt install -y \
+            zip unzip build-essential git \
+            python3-dev python3-pip python3-setuptools \
+            ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+            zlib1g-dev autoconf automake libtool cmake pkg-config \
+            libffi-dev libssl-dev
 
       - name: Install build tools
         run: |
           pip install --upgrade cython virtualenv buildozer
 
-      - name: 自动静默接受 Android SDK 许可协议 (超强防阻断)
+      - name: 自动静默接受 Android SDK 许可协议
         run: |
           yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
 

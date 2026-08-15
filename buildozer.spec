@@ -7,7 +7,7 @@ package.domain = org.omphalos
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,txt
 
-package.version = 1.0
+version = 1.0
 
 requirements = python3,kivy
 

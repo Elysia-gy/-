@@ -30,6 +30,7 @@ android.entrypoint = org.kivy.android.PythonActivity
 android.debug_artifact = apk
 
 android.gradle_dependencies =
+p4a.source_dir = ./p4a
 
 [buildozer]
 log_level = 2

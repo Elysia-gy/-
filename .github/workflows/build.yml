@@ -32,45 +32,49 @@ jobs:
         run: |
           yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
 
-      # =============================================================
-      # 修补 python-for-android 的 libffi recipe 到 3.4.4
-      # =============================================================
-      - name: Prepare patched python-for-android (master branch)
+      # ================================================================
+      # 清理缓存并修补 libffi recipe
+      # ================================================================
+      - name: Prepare patched p4a and clear libffi cache
         run: |
+          # 删除可能缓存的旧 libffi 源码
+          rm -rf ~/.buildozer/android/packages/libffi*
+          rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/libffi
+
+          # 克隆 master 分支的 p4a
           git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
-          RECIPE_FILE="p4a/pythonforandroid/recipes/libffi/__init__.py"
 
-          # 显示原始内容（调试用）
-          echo "====== Original recipe ======"
-          cat "$RECIPE_FILE"
-          echo "=============================="
+          RECIPE="p4a/pythonforandroid/recipes/libffi/__init__.py"
+          echo "====== 原始内容 ======"
+          cat "$RECIPE"
 
-          # 使用 Python 进行精确替换（兼容单/双引号）
+          # 使用 Python 精确替换
           python3 -c "
           import re
-          with open('$RECIPE_FILE', 'r') as f:
+          with open('$RECIPE', 'r') as f:
               content = f.read()
-          # 替换版本号（匹配 '3.2.1' 或 "3.2.1"）
-          content = re.sub(r\"version\\s*=\\s*['\\\"]3\\.[0-9]+\\.[0-9]+['\\\"]\", 'version = \"3.4.4\"', content)
-          # 替换第一个 url（匹配任意引号包裹的地址）
-          content = re.sub(r\"url\\s*=\\s*['\\\"].*?['\\\"]\", 'url = \"https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz\"', content, count=1)
-          with open('$RECIPE_FILE', 'w') as f:
+          # 替换版本号：匹配 version = 'v3.4.2' 或 version = "3.2.1" 等
+          content = re.sub(r\"version\\s*=\\s*['\\\"]v?3\\.[0-9]+\\.[0-9]+['\\\"]\", 'version = \"3.4.4\"', content)
+          # 替换 URL：匹配任何引号包裹的旧 URL，替换为 3.4.4 的下载地址
+          content = re.sub(r\"url\\s*=\\s*['\\\"][^'\\\"]+['\\\"]\", 'url = \"https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz\"', content)
+          with open('$RECIPE', 'w') as f:
               f.write(content)
           "
 
-          # 显示修改后的内容，并验证版本是否为 3.4.4
-          echo "====== Modified recipe ======"
-          cat "$RECIPE_FILE"
-          echo "=============================="
+          echo "====== 修改后内容 ======"
+          cat "$RECIPE"
 
-          # 强制验证：如果版本不是 3.4.4，则失败
-          if ! grep -q 'version = "3.4.4"' "$RECIPE_FILE"; then
-            echo "ERROR: libffi version is NOT 3.4.4!"
+          # 验证替换是否成功
+          if grep -q 'version = "3.4.4"' "$RECIPE" && grep -q 'libffi-3.4.4.tar.gz' "$RECIPE"; then
+            echo "✅ libffi recipe 已成功更新到 3.4.4"
+          else
+            echo "❌ 版本或 URL 替换失败，请检查"
             exit 1
           fi
-          echo "✅ libffi recipe successfully patched to 3.4.4"
-      # =============================================================
 
+      # ================================================================
+      # 构建 APK
+      # ================================================================
       - name: Build APK
         run: |
           buildozer android debug

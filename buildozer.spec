@@ -29,6 +29,8 @@ fullscreen = 0
 android.entrypoint = org.kivy.android.PythonActivity
 android.debug_artifact = apk
 
+android.gradle_dependencies =
+
 [buildozer]
 log_level = 2
 warn_on_root = 1

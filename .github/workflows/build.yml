@@ -44,7 +44,6 @@ jobs:
 
           git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
 
-          # 以可编辑模式安装 p4a，自动安装所有依赖（包含 appdirs）
           pip install -e ./p4a
 
           RECIPE="p4a/pythonforandroid/recipes/libffi/__init__.py"
@@ -59,7 +58,12 @@ jobs:
           "
           grep 'version = "3.4.4"' "$RECIPE" && grep 'libffi-3.4.4.tar.gz' "$RECIPE"
 
-      # ===== 修改点：移除 --spec 参数 =====
+      # ===== 新增：修正 buildozer.spec =====
+      - name: Fix buildozer spec (remove python version pin)
+        run: |
+          sed -i 's/^requirements = .*/requirements = python3,kivy/' buildozer.spec
+          cat buildozer.spec | grep requirements
+
       - name: Build APK
         run: |
           ls -la
@@ -67,11 +71,6 @@ jobs:
           buildozer android clean
           buildozer android debug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Omphalos-APK
-          path: bin/*.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

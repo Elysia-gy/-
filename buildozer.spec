@@ -11,21 +11,19 @@ source.exclude_dirs = tests, docs, examples, .git
 
 version = 1.0
 
-# ✅ 按你本地环境，锁定 Python 3.10，并指定同版本的 hostpython3
-requirements = python3==3.10.0,hostpython3==3.10.0,kivy
+requirements = python3==3.10,kivy
 
 orientation = portrait
 
 android.permissions =
 
-android.ndk = 25c
+android.ndk = 25b
 android.accept_sdk_license = True
 android.build_tools = 34.0.0
 
 android.api = 33
 android.minapi = 21
 
-# ✅ 这里同步改为 3.10
 android.python_version = 3.10
 
 android.archs = arm64-v8a, armeabi-v7a
@@ -34,11 +32,11 @@ fullscreen = 0
 android.entrypoint = org.kivy.android.PythonActivity
 android.debug_artifact = apk
 
-# ✅ 解决宿主系统头文件错误的编译参数（这个没变，必须保留）
 android.pre_build_cmds = export CFLAGS="-D__GNUC_PREREQ(x,y)=1 -D__ANDROID__"
 
 p4a.source_dir = ./p4a
 
 [buildozer]
-log_level = 2
+log_level = 4
 warn_on_root = 1
+connect_timeout = 400

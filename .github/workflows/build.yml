@@ -36,7 +36,6 @@ jobs:
           pip install --upgrade cython virtualenv buildozer
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
-      # ===== 关键修改：使用 pip install -e 安装 p4a =====
       - name: Prepare patched p4a and clear libffi cache
         run: |
           rm -rf ~/.buildozer/android/packages/libffi*
@@ -60,13 +59,19 @@ jobs:
           "
           grep 'version = "3.4.4"' "$RECIPE" && grep 'libffi-3.4.4.tar.gz' "$RECIPE"
 
+      # ===== 修改点：移除 --spec 参数 =====
       - name: Build APK
         run: |
           ls -la
           which buildozer
-          buildozer android clean --spec ./buildozer.spec
-          buildozer android debug --spec ./buildozer.spec
+          buildozer android clean
+          buildozer android debug
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Omphalos-APK
+          path: bin/*.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

@@ -58,9 +58,9 @@ jobs:
       - name: Build APK(Only show error log)
         run: |
           ls -la
-          buildozer --spec ./buildozer.spec clean
+          buildozer clean --spec ./buildozer.spec
           set -o pipefail
-          buildozer --spec ./buildozer.spec android debug 2>&1 >/dev/null | tee build-error.log
+          buildozer android debug --spec ./buildozer.spec 2>&1 >/dev/null | tee build-error.log
           cat build-error.log
 
       - name: Upload APK

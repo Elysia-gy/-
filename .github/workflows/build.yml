@@ -58,16 +58,16 @@ jobs:
           "
           grep 'version = "3.4.4"' "$RECIPE" && grep 'libffi-3.4.4.tar.gz' "$RECIPE"
 
-      # ===== 新增：修正 buildozer.spec =====
       - name: Fix buildozer spec (remove python version pin)
         run: |
           sed -i 's/^requirements = .*/requirements = python3,kivy/' buildozer.spec
           cat buildozer.spec | grep requirements
 
+      # ===== 关键修复：清空 PKG_CONFIG_PATH 防止宿主头文件干扰 =====
       - name: Build APK
         run: |
-          ls -la
-          which buildozer
+          export PKG_CONFIG_PATH=""
+          export PKG_CONFIG_LIBDIR=""
           buildozer android clean
           buildozer android debug
 

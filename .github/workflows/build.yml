@@ -36,33 +36,18 @@ jobs:
           pip install --upgrade cython virtualenv buildozer
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Prepare patched p4a
-        run: |
-          rm -rf ~/.buildozer/android/packages/libffi*
-          rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/libffi
-          rm -rf ./p4a
-
-          # ✅ 关键修复：使用 master 分支
-          git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
-          pip install -e ./p4a
-
-          RECIPE="p4a/pythonforandroid/recipes/libffi/__init__.py"
-          python3 -c "
-          import re
-          with open('$RECIPE', 'r') as f:
-              content = f.read()
-          content = re.sub(r\"version\\s*=\\s*['\\\"]v?3\\.[0-9]+\\.[0-9]+['\\\"]\", 'version = \"3.4.4\"', content)
-          content = re.sub(r\"url\\s*=\\s*['\\\"][^'\\\"]+['\\\"]\", 'url = \"https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz\"', content)
-          with open('$RECIPE', 'w') as f:
-              f.write(content)
-          "
-
       - name: Configure buildozer.spec
         run: |
+          # 移除固定的 python 版本
           sed -i 's/^requirements = .*/requirements = python3,kivy/' buildozer.spec
+          # 只构建 arm64-v8a（节省内存和时间）
           sed -i 's/^android.archs = .*/android.archs = arm64-v8a/' buildozer.spec
+          # 限制并行编译数
           echo "android.ndk_parallel_build_jobs = 2" >> buildozer.spec
+          # 确保包含字体文件
           echo "source.include_exts = py,png,jpg,kv,atlas,ttf,ttc" >> buildozer.spec
+          # 让 buildozer 使用 master 分支的 p4a（最新稳定）
+          echo "android.p4a_branch = master" >> buildozer.spec
 
       - name: Build APK
         env:

@@ -36,6 +36,7 @@ jobs:
           pip install --upgrade cython virtualenv buildozer
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
+      # ===== 关键修改：安装 p4a 依赖 =====
       - name: Prepare patched p4a and clear libffi cache
         run: |
           rm -rf ~/.buildozer/android/packages/libffi*
@@ -43,6 +44,9 @@ jobs:
           rm -rf ./p4a
 
           git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
+
+          # 安装 p4a 所需的所有 Python 依赖（包含 appdirs）
+          pip install -r p4a/requirements.txt
 
           RECIPE="p4a/pythonforandroid/recipes/libffi/__init__.py"
           python3 -c "
@@ -60,7 +64,7 @@ jobs:
         run: |
           ls -la
           which buildozer
-          buildozer android clean --spec ./buildozer.spec   # ✅ 修复：指定 android 平台
+          buildozer android clean --spec ./buildozer.spec
           buildozer android debug --spec ./buildozer.spec
 
       - name: Upload APK

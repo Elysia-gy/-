@@ -34,6 +34,7 @@ jobs:
       - name: Install build tools
         run: |
           pip install --upgrade cython virtualenv buildozer
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
       - name: Prepare patched p4a and clear libffi cache
         run: |
@@ -55,22 +56,15 @@ jobs:
           "
           grep 'version = "3.4.4"' "$RECIPE" && grep 'libffi-3.4.4.tar.gz' "$RECIPE"
 
-      - name: Build APK(Only show error log)
+      - name: Build APK
         run: |
           ls -la
+          which buildozer
           buildozer clean --spec ./buildozer.spec
-          set -o pipefail
-          buildozer android debug --spec ./buildozer.spec 2>&1 >/dev/null | tee build-error.log
-          cat build-error.log
+          buildozer android debug --spec ./buildozer.spec
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Omphalos-APK
           path: bin/*.apk
-
-      - name: Upload error log backup
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-log
-          path: build-error.log

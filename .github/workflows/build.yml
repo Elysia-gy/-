@@ -60,7 +60,7 @@ jobs:
         run: |
           ls -la
           which buildozer
-          buildozer clean --spec ./buildozer.spec
+          buildozer android clean --spec ./buildozer.spec   # ✅ 修复：指定 android 平台
           buildozer android debug --spec ./buildozer.spec
 
       - name: Upload APK

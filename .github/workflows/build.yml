@@ -1,17 +1,18 @@
 name: Build Kivy APK
-
-on: [push]
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install system dependencies
         run: |
@@ -22,56 +23,53 @@ jobs:
             ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
             zlib1g-dev autoconf automake libtool cmake pkg-config \
-            libffi-dev libssl-dev libltdl-dev
+            libffi-dev libssl-dev libltdl-dev openjdk-17-jdk
+
+      - name: Cache global buildozer SDK NDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer-global
+          key: ${{ runner.os }}‑bz‑global‑v3
 
       - name: Install build tools
         run: |
           pip install --upgrade cython virtualenv buildozer
 
-      - name: 自动静默接受 Android SDK 许可协议
-        run: |
-          yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
-
       - name: Prepare patched p4a and clear libffi cache
         run: |
-          # 删除缓存
           rm -rf ~/.buildozer/android/packages/libffi*
           rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/libffi
+          rm -rf ./p4a
 
           git clone --depth 1 --branch master https://github.com/kivy/python-for-android.git p4a
 
           RECIPE="p4a/pythonforandroid/recipes/libffi/__init__.py"
-          echo "====== 原始内容 ======"
-          cat "$RECIPE"
-
           python3 -c "
           import re
           with open('$RECIPE', 'r') as f:
               content = f.read()
-          # 替换版本号（匹配 v3.4.2 或 3.2.1 等）
           content = re.sub(r\"version\\s*=\\s*['\\\"]v?3\\.[0-9]+\\.[0-9]+['\\\"]\", 'version = \"3.4.4\"', content)
-          # 替换 URL
           content = re.sub(r\"url\\s*=\\s*['\\\"][^'\\\"]+['\\\"]\", 'url = \"https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz\"', content)
           with open('$RECIPE', 'w') as f:
               f.write(content)
           "
+          grep 'version = "3.4.4"' "$RECIPE" && grep 'libffi-3.4.4.tar.gz' "$RECIPE"
 
-          echo "====== 修改后内容 ======"
-          cat "$RECIPE"
-
-          if grep -q 'version = "3.4.4"' "$RECIPE" && grep -q 'libffi-3.4.4.tar.gz' "$RECIPE"; then
-            echo "✅ libffi recipe 已成功更新到 3.4.4"
-          else
-            echo "❌ 版本或 URL 替换失败"
-            exit 1
-          fi
-
-      - name: Build APK
+      - name: Build APK(Only show error log)
         run: |
-          buildozer android debug
+          buildozer clean
+          set -o pipefail
+          buildozer android debug 2>&1 >/dev/null | tee build-error.log
+          cat build-error.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Omphalos-APK
           path: bin/*.apk
+
+      - name: Upload error log backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-log
+          path: build-error.log
